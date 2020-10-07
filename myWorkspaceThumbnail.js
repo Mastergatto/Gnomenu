@@ -7,6 +7,7 @@ const Signals = imports.signals;
 const Background = imports.ui.background;
 const DND = imports.ui.dnd;
 const Main = imports.ui.main;
+const Tweener = imports.tweener.tweener;
 const Workspace = imports.ui.workspace;
 const WorkspacesView = imports.ui.workspacesView;
 
@@ -644,7 +645,9 @@ var MyThumbnailsBox = GObject.registerClass({
 
         super._init({ reactive: true,
                       style_class: 'gnomenu-workspace-thumbnails',
-                      request_mode: Clutter.RequestMode.WIDTH_FOR_HEIGHT });
+                      request_mode: Clutter.RequestMode.WIDTH_FOR_HEIGHT, 
+                      x_align: Clutter.ActorAlign.START,
+                      y_align: Clutter.ActorAlign.START });
 
         this._delegate = this;
 

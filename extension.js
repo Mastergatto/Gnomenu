@@ -2968,10 +2968,9 @@ class GnoMenu_PanelMenuButton extends PanelMenu.Button {
         // // Workspaces thumbnails Box and Wrapper
         this.thumbnailsBoxFiller = new St.BoxLayout({ style_class: 'gnomenu-workspaces-filler', vertical: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START });
         // this.thumbnailsBox = new St.BoxLayout({ style_class: 'gnomenu-workspaces-filler', vertical: true });
-        this.thumbnailsBox = new WorkspaceThumbnail.MyThumbnailsBox(settings, this.menu, this.thumbnailsBoxFiller); //x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START ?
+        this.thumbnailsBox = new WorkspaceThumbnail.MyThumbnailsBox(settings, this.menu, this.thumbnailsBoxFiller);
         this.workspacesWrapper = new St.BoxLayout({ style_class: 'gnomenu-workspaces-wrapper', x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START });
         this.workspacesWrapper.add_child(this.thumbnailsBoxFiller);
-        // this.workspacesWrapper.add(this.thumbnailsBox, {x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START});
         this.workspacesWrapper.add_child(this.thumbnailsBox);
 
         // // workspacesScrollBox allows workspace thumbnails to scroll vertically
