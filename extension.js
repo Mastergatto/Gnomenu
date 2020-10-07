@@ -119,7 +119,14 @@ function getCustIcon(icon_name) {
             return false;
         }
 
-}
+};
+
+// Workaround for (X)Wayland
+Gtk.IconTheme.get_default = function() {
+    let theme = new Gtk.IconTheme();
+    theme.set_custom_theme(St.Settings.get().gtk_icon_theme);
+    return theme;
+};
 
 /* =========================================================================
 /* name:    SearchWebBookmarks
@@ -4056,3 +4063,4 @@ function disable() {
 function init() {
     Convenience.initTranslations();
 }
+
