@@ -51,37 +51,41 @@ class GnoMenu_MyPrimaryActorLayout extends Clutter.FixedLayout {
     }
 });
 
-var MyWindowClone = class {
-    constructor(realWindow, parentMenu) {
+var MyWindowClone = GObject.registerClass({
+    Signals: {
+        'drag-begin': {},
+        'drag-cancelled': {},
+        'drag-end': {},
+        'selected': { param_types: [GObject.TYPE_UINT] },
+    },
+}, class GnoMenu_MyWindowClone extends Clutter.Actor {
+    _init(realWindow, parentMenu) {
         this._parentMenu = parentMenu;
-        this.clone = new Clutter.Clone({ source: realWindow });
 
-        /* Can't use a Shell.GenericContainer because of DND and reparenting... */
-        this.actor = new Clutter.Actor({ layout_manager: new MyPrimaryActorLayout(this.clone),
-                                         reactive: true });
-        this.actor._delegate = this;
-        this.actor.add_child(this.clone);
+        let clone = new Clutter.Clone({ source: realWindow });
+        super._init({
+            layout_manager: new MyPrimaryActorLayout(clone),
+            reactive: true,
+        });
+        this._delegate = this;
+
+        this.add_child(clone);
         this.realWindow = realWindow;
         this.metaWindow = realWindow.meta_window;
 
-        this.clone._updateId = this.realWindow.connect('notify::position',
-                                                       this._onPositionChanged.bind(this));
-        this.clone._destroyId = this.realWindow.connect('destroy', () => {
+        clone._updateId = this.realWindow.connect('notify::position',
+                                                  this._onPositionChanged.bind(this));
+        clone._destroyId = this.realWindow.connect('destroy', () => {
             // First destroy the clone and then destroy everything
             // This will ensure that we never see it in the _disconnectSignals loop
-            this.clone.destroy();
+            clone.destroy();
             this.destroy();
         });
         this._onPositionChanged();
 
-        this.actor.connect('button-release-event',
-                           this._onButtonRelease.bind(this));
-        this.actor.connect('touch-event',
-                           this._onTouchEvent.bind(this));
+        this.connect('destroy', this._onDestroy.bind(this));
 
-        this.actor.connect('destroy', this._onDestroy.bind(this));
-
-        this._draggable = DND.makeDraggable(this.actor,
+        this._draggable = DND.makeDraggable(this,
                                             { restoreOnSuccess: true,
                                               dragActorMaxSize: Workspace.WINDOW_DND_SIZE,
                                               dragActorOpacity: Workspace.DRAGGING_WINDOW_OPACITY });
@@ -130,15 +134,12 @@ var MyWindowClone = class {
         if (actor.inDrag)
             return;
 
+        let parent = this.get_parent();
         let actualAbove = this.getActualStackAbove();
         if (actualAbove == null)
-            this.actor.lower_bottom();
+            parent.set_child_below_sibling(this, null);
         else
-            this.actor.set_child_above_sibling(this.actor, actualAbove);
-    }
-
-    destroy() {
-        this.actor.destroy();
+            parent.set_child_above_sibling(this, actualAbove);
     }
 
     addAttachedDialog(win) {
@@ -155,7 +156,7 @@ var MyWindowClone = class {
         clone._destroyId = realDialog.connect('destroy', () => {
             clone.destroy();
         });
-        this.actor.add_child(clone);
+        this.add_child(clone);
     }
 
     _updateDialogPosition(realDialog, cloneDialog) {
@@ -167,11 +168,11 @@ var MyWindowClone = class {
     }
 
     _onPositionChanged() {
-        this.actor.set_position(this.realWindow.x, this.realWindow.y);
+        this.set_position(this.realWindow.x, this.realWindow.y);
     }
 
     _disconnectSignals() {
-        this.actor.get_children().forEach(child => {
+        this.get_children().forEach(child => {
             let realWindow = child.source;
 
             realWindow.disconnect(child._updateId);
@@ -182,65 +183,67 @@ var MyWindowClone = class {
     _onDestroy() {
         this._disconnectSignals();
 
-        this.actor._delegate = null;
+        this._delegate = null;
 
         if (this.inDrag) {
             this.emit('drag-end');
             this.inDrag = false;
         }
-
-        this.disconnectAll();
     }
 
-    _onButtonRelease(actor, event) {
-        let button = event.get_button();
-        if (button == 3) { //right click
+    vfunc_button_press_event() {
+        return Clutter.EVENT_STOP;
+    }
+
+    vfunc_button_release_event(buttonEvent) {
+        if (buttonEvent.button == 3) {
+            // pass right-click event on allowing it to bubble up to thumbnailsBox
             return Clutter.EVENT_PROPAGATE;
         }
-
+        
         this._parentMenu.actor.grab_key_focus();
 
-        this.emit('selected', event.get_time());
+        this.emit('selected', buttonEvent.time);
 
         return Clutter.EVENT_STOP;
     }
 
-    _onTouchEvent(actor, event) {
-        if (event.type() != Clutter.EventType.TOUCH_END ||
-            !global.display.is_pointer_emulating_sequence(event.get_event_sequence()))
+    vfunc_touch_event(touchEvent) {
+        if (touchEvent.type != Clutter.EventType.TOUCH_END ||
+            !global.display.is_pointer_emulating_sequence(touchEvent.sequence))
             return Clutter.EVENT_PROPAGATE;
 
-        this.emit('selected', event.get_time());
+        this.emit('selected', touchEvent.time);
         return Clutter.EVENT_STOP;
     }
 
-    _onDragBegin(draggable, time) {
+    _onDragBegin(_draggable, _time) {
         this.inDrag = true;
         this.emit('drag-begin');
     }
 
-    _onDragCancelled(draggable, time) {
+    _onDragCancelled(_draggable, _time) {
         this.emit('drag-cancelled');
     }
 
-    _onDragEnd(draggable, time, snapback) {
+    _onDragEnd(_draggable, _time, _snapback) {
         this.inDrag = false;
 
         // We may not have a parent if DnD completed successfully, in
         // which case our clone will shortly be destroyed and replaced
         // with a new one on the target workspace.
-        if (this.actor.get_parent() != null) {
+        let parent = this.get_parent();
+        if (parent !== null) {
             if (this._stackAbove == null)
-                this.actor.lower_bottom();
+                parent.set_child_below_sibling(this, null);
             else
-                this.actor.set_child_above_sibling(this.actor, this._stackAbove);
+                parent.set_child_above_sibling(this, this._stackAbove);
         }
 
 
         this.emit('drag-end');
     }
-};
-Signals.addSignalMethods(MyWindowClone.prototype);
+});
 
 
 var ThumbnailState = {
@@ -992,7 +995,7 @@ class GnoMenu_MyThumbnailsBox extends St.Widget {
 
         // The thumbnails indicator actually needs to be on top of the thumbnails
         if (this._indicator)
-            this._indicator.set_child_above_sibling(this._indicator, null);
+            this.set_child_above_sibling(this._indicator, null);
 
         // Clear the splice index, we got the message
         this._spliceIndex = -1;
