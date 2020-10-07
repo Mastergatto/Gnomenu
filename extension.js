@@ -128,6 +128,17 @@ Gtk.IconTheme.get_default = function() {
     return theme;
 };
 
+// Make sure that signals are handled and disconnected properly
+function disconnect(obj, sig) {
+    try {
+        if (sig != null && obj) {
+            obj.disconnect(sig);
+        }
+    } catch (error) {
+        log('[GnoMenu] Failed to disconnect signal: ' + error);
+    }
+}
+
 /* =========================================================================
 /* name:    SearchWebBookmarks
  * @desc    Class to consolodate search of web browser(s) bookmarks
@@ -3910,28 +3921,28 @@ var GnoMenuButton = class GnoMenu_GnoMenuPanelButton {
     destroy() {
         // Disconnect global signals
         if (this._installedChangedId)
-            Shell.AppSystem.get_default().disconnect(this._installedChangedId);
+            disconnect(Shell.AppSystem.get_default(), this._installedChangedId);
 
         if (this._favoritesChangedId)
-            AppFavorites.getAppFavorites().disconnect(this._favoritesChangedId);
+            disconnect(AppFavorites.getAppFavorites(),this._favoritesChangedId);
 
         if (this._iconsChangedId)
-            IconTheme.get_default().disconnect(this._iconsChangedId);
+            disconnect(IconTheme.get_default(), this._iconsChangedId);
 
         if (this._themeChangedId)
-            St.ThemeContext.get_for_stage(global.stage).disconnect(this._themeChangedId);
+            disconnect(St.ThemeContext.get_for_stage(global.stage), this._themeChangedId);
 
         if (this._overviewShownId)
-            Main.overview.disconnect(this._overviewShownId);
+            disconnect(Main.overview, this._overviewShownId);
 
         if (this._overviewHiddenId)
-            Main.overview.disconnect(this._overviewHiddenId);
+            disconnect(Main.overview, this._overviewHiddenId);
 
         if (this._overviewPageChangedId)
-            Main.overview.disconnect(this._overviewPageChangedId);
+            disconnect(Main.overview, this._overviewPageChangedId);
 
         if (this._hotCornersUpdatedId)
-            Main.layoutManager.disconnect(this._hotCornersUpdatedId);
+            disconnect(Main.layoutManager, this._hotCornersUpdatedId);
 
         // Unbind menu accelerator key
         Main.wm.removeKeybinding('panel-menu-keyboard-accelerator');
