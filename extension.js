@@ -817,12 +817,12 @@ class GnoMenu_PanelMenuButton extends PanelMenu.Button {
         // NOTE: can't get label to take using this method. Possible Gnome Shell bug?
         super._init(0.0, '');
 
-        this.actor.add_style_class_name('panel-button');
+        this.add_style_class_name('panel-button');
         this._bin = new St.Widget({ layout_manager: new Clutter.BinLayout() });
         this._box = new St.BoxLayout({ style_class: 'gnomenu-panel-menu-button' });
 
         this._bin.add_child(this._box);
-        this.actor.add_actor(this._bin);
+        this.add_actor(this._bin);
 
 
         // Add hotspot area 1px high at top of PanelMenuButton
@@ -862,7 +862,7 @@ class GnoMenu_PanelMenuButton extends PanelMenu.Button {
         }
 
         this.menu.connect('open-state-changed', this._onOpenStateToggled.bind(this));
-        this.actor.connect('key-press-event', this._onPanelMenuKeyPress.bind(this));
+        this.connect('key-press-event', this._onPanelMenuKeyPress.bind(this));
         this.menu.actor.connect('key-press-event', this._onMenuKeyPress.bind(this));
 
         this.applicationsByCategory = {};
@@ -954,14 +954,14 @@ class GnoMenu_PanelMenuButton extends PanelMenu.Button {
             this.thumbnailsBoxFiller.width = 0;
             this.workspacesWrapper.height = height;
             this.thumbnailsBox._createThumbnails();
-            this.thumbnailsBox.actor.set_position(1, 0); // position inside wrapper
+            this.thumbnailsBox.set_position(1, 0); // position inside wrapper
             if (settings.get_boolean('hide-workspaces')) {
                 this.workspacesWrapper.width = 0;
-                this.thumbnailsBox.actor.hide();
+                this.thumbnailsBox.hide();
                 this.workspacesWrapper.hide();
             } else {
-                this.workspacesWrapper.width = this.thumbnailsBox.actor.width;
-                this.thumbnailsBox.actor.show();
+                this.workspacesWrapper.width = this.thumbnailsBox.width;
+                this.thumbnailsBox.show();
                 this.workspacesWrapper.show();
             }
 
@@ -2052,8 +2052,8 @@ class GnoMenu_PanelMenuButton extends PanelMenu.Button {
         if (thumbnail == null)
             return;
 
-        // let [x, y] = thumbnail.actor.get_transformed_position();
-        let [w, h] = thumbnail.actor.get_transformed_size();
+        // let [x, y] = thumbnail.get_transformed_position();
+        let [w, h] = thumbnail.get_transformed_size();
         let [borderTop, borderBottom] = this.thumbnailsBox.getIndicatorBorders();
 
         let vscroll = this.workspacesScrollBox.get_vscroll_bar();
@@ -2062,12 +2062,12 @@ class GnoMenu_PanelMenuButton extends PanelMenu.Button {
         var scrollboxHeight = this.workspacesScrollBox.get_allocation_box().y2 - this.workspacesScrollBox.get_allocation_box().y1;
 
         var newScrollValue = currentScrollValue;
-        if (currentScrollValue > thumbnail.actor.y - borderTop) {
-            newScrollValue = thumbnail.actor.y - borderTop;
+        if (currentScrollValue > thumbnail.y - borderTop) {
+            newScrollValue = thumbnail.y - borderTop;
         }
 
-        if (scrollboxHeight + currentScrollValue < thumbnail.actor.y + h + borderBottom) {
-            newScrollValue = thumbnail.actor.y + h + borderBottom - scrollboxHeight;
+        if (scrollboxHeight + currentScrollValue < thumbnail.y + h + borderBottom) {
+            newScrollValue = thumbnail.y + h + borderBottom - scrollboxHeight;
         }
 
         vscroll.get_adjustment().set_value(newScrollValue);
@@ -2972,7 +2972,7 @@ class GnoMenu_PanelMenuButton extends PanelMenu.Button {
         this.workspacesWrapper = new St.BoxLayout({ style_class: 'gnomenu-workspaces-wrapper', x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START });
         this.workspacesWrapper.add_child(this.thumbnailsBoxFiller);
         // this.workspacesWrapper.add(this.thumbnailsBox, {x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START});
-        this.workspacesWrapper.add_child(this.thumbnailsBox.actor);
+        this.workspacesWrapper.add_child(this.thumbnailsBox);
 
         // // workspacesScrollBox allows workspace thumbnails to scroll vertically
         this.workspacesScrollBox = new St.ScrollView({ reactive: true, style_class: 'gnomenu-workspaces-scrollbox', x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START });
@@ -3493,7 +3493,7 @@ var GnoMenuButton = class GnoMenu_GnoMenuPanelButton {
 
     updateCornerPanel() {
         if (_DEBUG_) global.log("GnoMenuButton: updateCornerPanel");
-        if (Main.panel.actor.get_text_direction() == Clutter.TextDirection.RTL) {
+        if (Main.panel.get_text_direction() == Clutter.TextDirection.RTL) {
             Main.panel._leftCorner.setStyleParent(Main.panel._rightBox);
             Main.panel._rightCorner.setStyleParent(Main.panel._leftBox);
         } else {
@@ -3514,11 +3514,11 @@ var GnoMenuButton = class GnoMenu_GnoMenuPanelButton {
         // Disable or Enable Hot Corner
         if (settings.get_boolean('disable-activities-hotcorner')) {
             if (_DEBUG_) global.log("GnoMenuButton: updateHotCorner disabled hot corner");
-            if (corner && corner.actor) {
+            if (corner) {
                 // This is GS 3.8+ fallback corner. Need to hide actor
                 // to keep from triggering overview
                 if (_DEBUG_) global.log("GnoMenuButton: updateHotCorner corner & actor exist - HIDE");
-                corner.actor.hide();
+                corner.hide();
             } else {
                 // Need to destroy corner to remove pressure barrier
                 // to keep from triggering overview
@@ -3530,11 +3530,11 @@ var GnoMenuButton = class GnoMenu_GnoMenuPanelButton {
             }
         } else {
             if (_DEBUG_) global.log("GnoMenuButton: updateHotCorner enabled hot corner");
-            if (corner && corner.actor) {
+            if (corner) {
                 // This is Gs 3.8+ fallback corner. Need to show actor
                 // to trigger overview
                 if (_DEBUG_) global.log("GnoMenuButton: updateHotCorner corner & actor exist ");
-                corner.actor.show();
+                corner.show();
             } else {
                 // Need to create corner to setup pressure barrier
                 // to trigger overview
@@ -4044,7 +4044,7 @@ function enable() {
     if (hideDefaultActivitiesButton) {
         let button = Main.panel.statusArea['activities'];
         if (button != null) {
-            button.actor.hide();
+            button.hide();
         }
     }
 
@@ -4066,7 +4066,7 @@ function disable() {
     if (hideDefaultActivitiesButton) {
         let button = Main.panel.statusArea['activities'];
         if (button) {
-            button.actor.show();
+            button.show();
         }
     }
 
