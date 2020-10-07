@@ -7,7 +7,7 @@ const Signals = imports.signals;
 const Background = imports.ui.background;
 const DND = imports.ui.dnd;
 const Main = imports.ui.main;
-const Tweener = imports.ui.tweener;
+const Tweener = imports.tweener.tweener;
 const Workspace = imports.ui.workspace;
 const WorkspacesView = imports.ui.workspacesView;
 
@@ -134,7 +134,7 @@ var MyWindowClone = class {
         if (actualAbove == null)
             this.actor.lower_bottom();
         else
-            this.actor.raise(actualAbove);
+            this.actor.set_child_above_sibling(this.actor, actualAbove);
     }
 
     destroy() {
@@ -233,7 +233,7 @@ var MyWindowClone = class {
             if (this._stackAbove == null)
                 this.actor.lower_bottom();
             else
-                this.actor.raise(this._stackAbove);
+                this.actor.set_child_above_sibling(this.actor, this._stackAbove);
         }
 
 
@@ -992,7 +992,7 @@ class GnoMenu_MyThumbnailsBox extends St.Widget {
 
         // The thumbnails indicator actually needs to be on top of the thumbnails
         if (this._indicator)
-            this._indicator.raise_top();
+            this._indicator.set_child_above_sibling(this._indicator, null);
 
         // Clear the splice index, we got the message
         this._spliceIndex = -1;
@@ -1202,7 +1202,7 @@ class GnoMenu_MyThumbnailsBox extends St.Widget {
     }
 
     vfunc_allocate(box, flags) {
-        this.set_allocation(box, flags);
+        this.set_allocation(box);
 
         let rtl = (Clutter.get_default_text_direction () == Clutter.TextDirection.RTL);
 
@@ -1321,7 +1321,7 @@ class GnoMenu_MyThumbnailsBox extends St.Widget {
             childBox.y2 = y1 + portholeHeight;
 
             thumbnail.actor.set_scale(roundedHScale, roundedVScale);
-            thumbnail.actor.allocate(childBox, flags);
+            thumbnail.actor.allocate(childBox);
 
             // We round the collapsing portion so that we don't get thumbnails resizing
             // during an animation due to differences in rounded, but leave the uncollapsed
@@ -1340,7 +1340,7 @@ class GnoMenu_MyThumbnailsBox extends St.Widget {
         childBox.x2 += indicatorRightFullBorder;
         childBox.y1 = indicatorY1 - indicatorTopFullBorder;
         childBox.y2 = (indicatorY2 ? indicatorY2 : (indicatorY1 + thumbnailHeight)) + indicatorBottomFullBorder;
-        this._indicator.allocate(childBox, flags);
+        this._indicator.allocate(childBox);
     }
 
     _activeWorkspaceChanged(wm, from, to, direction) {
