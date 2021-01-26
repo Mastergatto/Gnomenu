@@ -796,7 +796,7 @@ class GnoMenu_PanelButton extends PanelMenu.Button {
 
         // Add label to button
         if (nameText && nameText.length > 0) {
-                let label = new St.Label({ text: ' '+nameText, expand: true, x_align:Clutter.ActorAlign.CENTER, y_align:Clutter.ActorAlign.CENTER});
+                let label = new St.Label({ text: ' '+nameText, x_align:Clutter.ActorAlign.CENTER, y_align:Clutter.ActorAlign.CENTER});
                 let labelWrapper = new St.Bin();
                 labelWrapper.set_child(label);
                 this._box.add_child(labelWrapper);
